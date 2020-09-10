@@ -159,12 +159,12 @@
         </button>
 
         <h2>Output</h2>
-        <div>
+        <div class="ml-3 mr-3">
           <img
             v-bind:src="latexEmitImgUrl"
             alt="Latex emit"
             v-show="showLatexEmitImg"
-            class="mb-2 ml-3"
+            class="mb-2"
           />
         </div>
         <pre><pre id="slide-output" class="inner" v-html="output"><code></code></pre></pre>
@@ -198,7 +198,7 @@
       new Vue({
         el: "#app",
         data: {
-          commit: "f1c58ee8374f4f90e0c2b0f4131d757c463a2c94",
+          commit: "2eac4ac73705d6a5579ea46410cfc71c5d67b77c",
           input,
           output: "",
           emitFormatOptions: ["pretty", "latex", "s-expression", "debug"],
@@ -300,7 +300,7 @@ on commit ${this.commit}.
             if (this.showLatexEmitImg) {
               // slice(1, -1) to strip inline math mode: $<expr>$
               const latex = encodeURIComponent(this.output.slice(1, -1));
-              this.latexEmitImgUrl = `https://latex.codecogs.com/gif.latex?${latex}`;
+              this.latexEmitImgUrl = `https://latex.codecogs.com/svg.latex?${latex}`;
             }
           }
         }
