@@ -208,6 +208,7 @@
       const DEFAULT_EXAMPLE = "x(x + 2 * 3) / (x + 6)";
       const DEFAULT_EMIT_CONFIG = {
         frac: false,
+        "define-assign": false,
       };
       const BASE_ISSUE_URL = "https://github.com/yslide/slide/issues/new";
 
@@ -236,7 +237,7 @@
       new Vue({
         el: "#app",
         data: {
-          commit: "9afa86725a4a6893ac0bec1ecae7981174b56bbd",
+          commit: "90cafd5ed54a813105ab2413e3191c4672f8a250",
           input,
           output: "",
           emitFormatOptions: ["pretty", "latex", "s-expression", "debug"],
