@@ -209,6 +209,7 @@
       const DEFAULT_EMIT_CONFIG = {
         frac: false,
         "define-assign": false,
+        "implicit-mult": false,
       };
       const BASE_ISSUE_URL = "https://github.com/yslide/slide/issues/new";
 
@@ -237,7 +238,7 @@
       new Vue({
         el: "#app",
         data: {
-          commit: "f3e006584c265faed2e1ebf955e820d1584ff423",
+          commit: "1d7e493b7779239f7b19353401ede9d2fe868788",
           input,
           output: "",
           emitFormatOptions: ["pretty", "latex", "s-expression", "debug"],
