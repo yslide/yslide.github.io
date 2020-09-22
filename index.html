@@ -240,7 +240,7 @@
       new Vue({
         el: "#app",
         data: {
-          commit: "b545ea00f86aca61684a0360ea531f66923c03fd",
+          commit: "b08da11c5ff479d8ca9cce9b458f94095eb79b49",
           input,
           output: "",
           emitFormatOptions: ["pretty", "latex", "s-expression", "debug"],
@@ -378,7 +378,8 @@ on commit ${this.commit}.
             this.showLatexEmitImg = code === 0 && this.emitFormat === "latex";
             if (this.showLatexEmitImg) {
               // slice(1, -1) to strip inline math mode: $<expr>$
-              const latex = encodeURIComponent(this.output.slice(1, -1));
+              const math = this.output.startsWith("$") ? this.output.slice(1, -1) : this.output;
+              const latex = encodeURIComponent(math);
               this.latexEmitImgUrl = `https://latex.codecogs.com/svg.latex?${latex}`;
             }
           },
