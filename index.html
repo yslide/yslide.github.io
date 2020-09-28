@@ -239,7 +239,7 @@
       new Vue({
         el: "#app",
         data: {
-          commit: "2084db0c3988d8e2dcf66281b5bb1c35d06f3eed",
+          commit: "07412a4e253befa6cef26471d94a420e05cc787e",
           input,
           output: "",
           emitFormatOptions: ["pretty", "latex", "s-expression", "debug"],
@@ -333,7 +333,7 @@
               .ansi_to_html(`${stderr}\n${stdout}`)
               .trim()
               .replace(
-                /(error|warning)\[([LSP]\d+)\]/g,
+                /(error|warning)\[([LSPV]\d+)\]/g,
                 '$1[<a href="#slide-output" v-on:click="explain(\'$2\')">$2</a>]'
               );
             this.ranOnce = true;
