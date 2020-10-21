@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width" />
+    <meta charset="UTF-8" />
+    <meta name="description" content="The slide web UI" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://avatars2.githubusercontent.com/u/49662722?s=400&u=f0bcc9ee748892048588a2907eb3f176b91a1084&v=4"
+    />
+    <title>Slide</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/@primer/css/dist/primer.css" />
+
+    <style>
+      pre.inner {
+        padding: 0;
+        font-size: 100%;
+        margin: 0;
+      }
+
+      /** Ansi -> HTML styles for use in coloring error messages. */
+      .ansi-black-fg {
+        color: #282c34;
+      }
+      .ansi-red-fg {
+        color: #e06c75;
+      }
+      .ansi-green-fg {
+        color: #98c379;
+      }
+      .ansi-yellow-fg {
+        color: #d19a66;
+      }
+      .ansi-blue-fg {
+        color: #61afef;
+      }
+      .ansi-magenta-fg {
+        color: #c678dd;
+      }
+      .ansi-cyan-fg {
+        color: #56b6c2;
+      }
+      .ansi-white-fg {
+        color: #abb2bf;
+      }
+      .ansi-bright-black-fg {
+        color: #5c6370;
+      }
+      .ansi-bright-red-fg {
+        color: #e06c75;
+      }
+      .ansi-bright-green-fg {
+        color: #98c379;
+      }
+      .ansi-bright-yellow-fg {
+        color: #d19a66;
+      }
+      .ansi-bright-blue-fg {
+        color: #61afef;
+      }
+      .ansi-bright-magenta-fg {
+        color: #c678dd;
+      }
+      .ansi-bright-cyan-fg {
+        color: #56b6c2;
+      }
+      .ansi-bright-white-fg {
+        color: #ffffff;
+      }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"
+      integrity="sha512-qoCTmFwBtCPvFhA+WAqatSOrghwpDhFHxwAGh+cppWonXbHA09nG1z5zi4/NGnp8dUhXiVrzA6EnKgJA+fyrpw=="
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/ansi_up@4.0.4/ansi_up.min.js"></script>
+
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [["$", "$"]],
+        },
+        svg: {
+          fontCache: "global",
+        },
+      };
+    </script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.1.2/es5/tex-chtml.min.js"
+      integrity="sha512-OEN4O//oR+jeez1OLySjg7HPftdoSaKHiWukJdbFJOfi2b7W0r0ppziSgVRVNaG37qS1f9SmttcutYgoJ6rwNQ=="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="d-flex flex-column flex-row flex-items-center">
+      <article id="app" class="markdown-body col-10 col-md-10 col-xl-6 mb-5 my-md-4 my-lg-8">
+        <div class="pagehead">
+          <h1 class="d-flex flex-row flex-items-center">
+            <a href="https://github.com/yslide/slide">slide</a>
+            <a v-bind:href="commitUrl" class="ml-2 mt-2 Label Label--green"
+              >{{ commit.substring(0, 6) }}</a
+            >
+          </h1>
+        </div>
+
+        <form>
+          <h2>Input</h2>
+          <pre><pre
+            id="slide-input"
+            class="inner"
+            contenteditable="true"
+            spellcheck="false"
+            @input="onInput"
+          ><code></code></pre></pre>
+
+          <details id="options">
+            <summary>Options</summary>
+            <div class="border bg-blue-light px-3 mt-2">
+              <div class="form-group">
+                <div class="form-group-header">
+                  <label>Emit format</label>
+                </div>
+                <div class="form-group-body">
+                  <select name="emit-mode" class="form-select" v-model="emitFormat">
+                    <option v-for="option in emitFormatOptions" v-bind:value="option">
+                      {{ option }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <details id="emit-config">
+                <summary>Emit config</summary>
+                <div v-for="(_show, opt) in emitConfig" class="form-checkbox ml-4">
+                  <label>
+                    <input
+                      type="checkbox"
+                      class="form-checkbox-details-trigger"
+                      v-model="emitConfig[opt]"
+                    />
+                    {{ opt }}
+                  </label>
+                </div>
+              </details>
+
+              <label>
+                <input type="checkbox" class="form-checkbox-details-trigger" v-model="lint" />
+                Lint
+              </label>
+
+              <div class="form-checkbox">
+                <label>
+                  <input
+                    id="parse-only"
+                    name="parse-only"
+                    type="checkbox"
+                    class="form-checkbox-details-trigger"
+                    v-model="parseOnly"
+                  />
+                  Parse only
+                  <span class="form-checkbox-details text-normal ml-4">
+                    <label>
+                      <input id="expr-pat" name="expr-pat" type="checkbox" v-model="exprPat" />
+                      Parse expression pattern
+                    </label>
+                  </span>
+                </label>
+              </div>
+
+              <div class="form-checkbox">
+                <label>
+                  <input
+                    type="checkbox"
+                    class="form-checkbox-details-trigger"
+                    v-model="shouldExplain"
+                  />
+                  Explain
+                  <span class="form-checkbox-details text-normal">
+                    <input
+                      class="form-control input-contrast"
+                      size="6"
+                      placeholder="code"
+                      v-model="explain"
+                    />
+                  </span>
+                </label>
+              </div>
+            </div>
+          </details>
+        </form>
+
+        <button type="submit" class="btn btn-md btn-primary" v-on:click="runSlide">slide!</button>
+
+        <h2>Output</h2>
+        <div class="ml-3 mr-3 mb-2" v-show="showLatexEmit" :key="output">{{output}}</div>
+        <pre id="slide-output"><component :is="outputComponent" /></pre>
+        <a v-bind:href="bugReportUrl" v-if="ranOnce">Report a bug</a>
+      </article>
+    </div>
+
+    <script type="module">
+      import init, { run_slide_wasm } from "./js/slide.js";
+
+      // The wasm build of slide must be loaded and initialized before
+      // run_slide_wasm can be used. Kick off the initialization promise here,
+      // and await it in `runSlide` to ensure that we never try to execute a
+      // program prematurely.
+      const slideWasmInit = init();
+
+      const ansi = new AnsiUp();
+      ansi.use_classes = true;
+
+      const DEFAULT_EXAMPLE = "x(x + 2 * 3) / (x + 6)";
+      const DEFAULT_EMIT_CONFIG = {
+        frac: false,
+        times: false,
+        div: false,
+        "implicit-mult": false,
+      };
+      const BASE_ISSUE_URL = "https://github.com/yslide/slide/issues/new";
+
+      const queryParams = new URLSearchParams(window.location.search);
+      const input = queryParams.get("input")
+        ? LZString.decompressFromEncodedURIComponent(queryParams.get("input"))
+        : DEFAULT_EXAMPLE;
+      const emitFormat = queryParams.get("emit-format") || "pretty";
+      const emitConfig = DEFAULT_EMIT_CONFIG;
+      if (queryParams.get("emit-config")) {
+        const userConfig = JSON.parse(
+          LZString.decompressFromEncodedURIComponent(queryParams.get("emit-config"))
+        );
+        for (const key of Object.keys(DEFAULT_EMIT_CONFIG)) {
+          if (userConfig[key] !== undefined) {
+            emitConfig[key] = userConfig[key];
+          }
+        }
+      }
+      const lint = queryParams.get("lint") === "true";
+      const parseOnly = queryParams.get("parse-only") === "true";
+      const exprPat = queryParams.get("expr-pat") === "true";
+      const shouldExplain = queryParams.get("shouldExplain") === "true";
+      const explain = queryParams.get("explain") || "";
+
+      new Vue({
+        el: "#app",
+        data: {
+          commit: "9f4fd133a03eb6255635349cb7e940cbc787cc22",
+          input,
+          output: "",
+          emitFormatOptions: ["pretty", "latex", "s-expression", "debug"],
+          emitFormat,
+          emitConfig,
+          lint,
+          parseOnly,
+          exprPat,
+          shouldExplain,
+          explain,
+          bugReportUrl: BASE_ISSUE_URL,
+          ranOnce: false,
+          showLatexEmit: false,
+        },
+        computed: {
+          commitUrl() {
+            return `https://github.com/yslide/slide/commit/${this.commit}`;
+          },
+
+          emitConfigOptIsSet() {
+            for (const isSet of Object.values(this.emitConfig)) {
+              if (isSet) return true;
+            }
+            return false;
+          },
+
+          outputComponent() {
+            return {
+              template: `<pre class="inner">${this.output}</pre>`,
+              methods: {
+                explain: (code) => {
+                  this.shouldExplain = true;
+                  this.explain = code;
+                  document.querySelector("#options").open = true;
+                  this.runSlide();
+                },
+              },
+            };
+          },
+        },
+        created() {
+          document.querySelector("#slide-input").innerText = this.input;
+          document.querySelector("#options").open =
+            this.emitConfigOptIsSet || this.lint || this.parseOnly || this.shouldExplain;
+          document.querySelector("#emit-config").open = this.emitConfigOptIsSet;
+        },
+        updated() {
+          this.updateUrl();
+          if (this.showLatexEmit) {
+            MathJax.typeset();
+          }
+        },
+        methods: {
+          updateUrl() {
+            const queryParams = new URLSearchParams(window.location.search);
+            queryParams.set("input", LZString.compressToEncodedURIComponent(this.input));
+            queryParams.set(
+              "emit-config",
+              LZString.compressToEncodedURIComponent(JSON.stringify(this.emitConfig))
+            );
+            queryParams.set("emit-format", this.emitFormat);
+            queryParams.set("lint", this.lint);
+            queryParams.set("parse-only", this.parseOnly);
+            queryParams.set("expr-pat", this.exprPat);
+            queryParams.set("shouldExplain", this.shouldExplain);
+            queryParams.set("explain", this.explain);
+            const curUrl = `${window.location.pathname}?${queryParams}`;
+            history.replaceState(null, "", curUrl);
+          },
+
+          onInput({ target }) {
+            this.input = target.innerText;
+            this.updateUrl();
+          },
+
+          async runSlide() {
+            await slideWasmInit;
+
+            const slideOpts = {
+              program: this.input,
+              emit_format: this.emitFormat,
+              emit_config: Object.keys(this.emitConfig).filter((opt) => this.emitConfig[opt]),
+              lint: this.lint,
+              parse_only: this.parseOnly,
+              expr_pat: this.exprPat,
+              explain_diagnostic: this.shouldExplain ? this.explain : undefined,
+              color: true,
+            };
+
+            const { code, stdout, stderr } = run_slide_wasm(slideOpts);
+
+            this.output = ansi
+              .ansi_to_html(`${stderr}\n${stdout}`)
+              .trim()
+              .replace(
+                /(error|warning)\[([LSPV]\d+)\]/g,
+                '$1[<a href="#slide-output" v-on:click="explain(\'$2\')">$2</a>]'
+              );
+            this.showLatexEmit = code === 0 && this.emitFormat === "latex";
+            this.ranOnce = true;
+            this.updateUrl();
+            this.updateBugReportUrl(slideOpts);
+          },
+
+          updateBugReportUrl(slideOpts) {
+            const optsStr = JSON.stringify(
+              slideOpts,
+              [
+                "emit_format",
+                "emit_config",
+                "lint",
+                "parse_only",
+                "expr_pat",
+                "explain_diagnostic",
+              ],
+              2
+            );
+            const body = `[slide playground](${window.location})
+
+Given the input
+
+\`\`\`
+${this.input}
+\`\`\`
+
+slide emits
+
+<pre>${this.output}</pre>
+
+<details>
+<summary>
+with the options
+</summary>
+
+\`\`\`json
+${optsStr}
+\`\`\`
+</details>
+
+on commit ${this.commit}.
+
+## Expected result
+
+<!-- Fill in this part! -->`;
+
+            const queryParams = new URLSearchParams();
+            queryParams.set("body", body);
+            this.bugReportUrl = `${BASE_ISSUE_URL}?${queryParams}`;
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
